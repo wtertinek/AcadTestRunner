@@ -38,7 +38,7 @@ namespace AcadTestRunner
 
           if (metadata.Method == null)
           {
-            testNotifier.TestFailed("Method " + methodName + " not found");
+            testNotifier.TestFailed("No public instance method " + methodName + " found");
             loaderNotifier.WriteMessage("Test execution finished with errors");
           }
           else
