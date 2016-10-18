@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace AcadTestRunner
 {
-  public class FileManager : IDisposable
+  internal class FileManager : IDisposable
   {
     private bool deleteDwgFile;
 

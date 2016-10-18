@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -7,6 +8,7 @@ using System.Threading.Tasks;
 
 namespace AcadTestRunner
 {
+  [DebuggerStepThrough]
   public class TestMetadata
   {
     public TestMetadata(string assemblyPath, string className, string methodName)

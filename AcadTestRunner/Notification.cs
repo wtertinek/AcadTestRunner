@@ -1,12 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace AcadTestRunner
 {
-  public class Notification
+  [DebuggerStepThrough]
+  internal class Notification
   {
     private const string Passed = "PASSED";
     private const string Failed = "FAILED";

@@ -26,7 +26,7 @@ namespace AcadTestRunner
       {
         var builder = new ScriptBuilder()
                       .NetLoad(addinPath)
-                      .Command("LoadAndExecuteTest", testAssemblyPath, testClassName, acadTestName)
+                      .Command("LoadAndExecuteTest", testAssemblyPath, testClassName, acadTestName, Debugger.IsAttached.ToString())
                       .Quit();
 
         if (!dwgFileProvided)
