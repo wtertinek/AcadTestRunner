@@ -1,11 +1,29 @@
-function Update-File ($targetFileName, $srcFileName)
-{  
-  (Get-Content -Encoding UTF8 $srcFileName) | ForEach-Object { $_ -replace "{AcadRootDir}", "$acadRootDir" } | Set-Content -Encoding UTF8 $targetFileName
+function Update-File ($targetFileName, $tempalteFileName, $variableName, $value)
+{
+  if (Test-Path $targetFileName)
+  {
+    $srcFileName = $targetFileName
+  }
+  else
+  {
+    $srcFileName = $tempalteFileName
+  }
+  
+  (Get-Content -Encoding UTF8 $srcFileName) | ForEach-Object { $_ -replace $variableName, $value } | Set-Content -Encoding UTF8 $targetFileName
 }
 
 $acadRootDir = Read-Host 'Please enter your AutoCAD installation folder'
+$addinRootDir = Read-Host 'Please enter the AcadTestRunner installation folder'
 
-if (Test-Path $acadRootDir)
+if (-Not (Test-Path $acadRootDir))
+{
+  Write-Host $acadRootDir 'does not exist'
+}
+elseif (-Not (Test-Path $addinRootDir))
+{
+  Write-Host $addinRootDir 'does not exist'
+}
+else
 {
   if (Test-Path ..\AcadTestRunner\AcadTestRunner.csproj.user)
   {
@@ -16,12 +34,11 @@ if (Test-Path $acadRootDir)
     Remove-Item ..\AcadTestRunner\AcadTestRunner.dll.config
   }  
   
-  Update-File ..\AcadTestRunner\AcadTestRunner.csproj.user "Template.csproj.user"  
-  Update-File ..\AcadTestRunner\AcadTestRunner.dll.config "AcadTestRunner.dll.config"
+  Update-File ..\AcadTestRunner\AcadTestRunner.csproj.user "Template.csproj.user"  "{AcadRootDir}" "$acadRootDir"
+  Update-File ..\AcadTestRunner\AcadTestRunner.dll.config "AcadTestRunner.dll.config" "{AcadRootDir}" "$acadRootDir"
+  Update-File ..\AcadTestRunner\AcadTestRunner.dll.config "AcadTestRunner.dll.config" "{AddinRootDir}" "$addinRootDir"
   
-  Write-Host 'AutoCAD reference path set to' $acadRootDir
-}
-else
-{
-  Write-Host $acadRootDir 'does not exist'
+  Write-Host ''
+  Write-Host 'AutoCAD reference path set to ' $acadRootDir
+  Write-Host 'AcadTestRunner installation directory is ' $addinRootDir
 }
