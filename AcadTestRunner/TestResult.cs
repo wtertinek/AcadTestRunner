@@ -59,6 +59,14 @@ namespace AcadTestRunner
 
     public string FullOutput { get; private set; }
 
+    public void DebugPrintFullOutput(string testName)
+    {
+      var header = "---------- " + testName + " ----------";
+      Debug.WriteLine(header);
+      Debug.WriteLine(FullOutput);
+      Debug.WriteLine(new string('-', header.Length));
+    }
+
     internal static TestResult TestPassed(IReadOnlyCollection<string> fullOutput)
     {
       return new TestResult(fullOutput);
