@@ -72,6 +72,11 @@ namespace AcadTestRunner
       return new TestResult(fullOutput);
     }
 
+    internal static TestResult TestFailed(string message)
+    {
+      return TestFailed(message, new string[0]);
+    }
+
     internal static TestResult TestFailed(string message, IReadOnlyCollection<string> fullOutput)
     {
       return new TestResult(message, fullOutput);

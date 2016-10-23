@@ -18,11 +18,11 @@ namespace AcadTestRunner
       this.addinPath = addinPath;
     }
 
-    public TestExecutionResult LoadAndExecuteTest(string testAssemblyPath, string testClassName, string acadTestName, string dwgFilePath)
+    public TestExecutionResult LoadAndExecuteTest(string testAssemblyPath, string testClassName, string acadTestName, string dwgFilePath, bool deleteDwgFileAfterTest)
     {
       var dwgFileProvided = !string.IsNullOrEmpty(dwgFilePath);
 
-      using (var fileManager = new FileManager(dwgFilePath))
+      using (var fileManager = new FileManager(dwgFilePath, deleteDwgFileAfterTest))
       {
         var builder = new ScriptBuilder()
                       .NetLoad(addinPath)

@@ -86,7 +86,7 @@ namespace AcadTestRunner
         {
           loaderNotifier.WriteMessage("Class " + metadata.Type.Name + " loaded");
 
-          if (metadata.Method == null)
+          if (metadata.TestMethod == null)
           {
             testNotifier.TestFailed("No public instance method " + methodName + " found");
             loaderNotifier.WriteMessage("Test execution finished with errors");
@@ -112,7 +112,7 @@ namespace AcadTestRunner
               loaderNotifier.WriteMessage("Instance of " + metadata.Type.Name + " created");
 
               loaderNotifier.WriteMessage("Executing AcadTest " + methodName);
-              metadata.Type.InvokeMember(metadata.Method.Name, BindingFlags.InvokeMethod, null, instance, new object[0]);
+              metadata.Type.InvokeMember(metadata.TestMethod.Name, BindingFlags.InvokeMethod, null, instance, new object[0]);
 
               if (expectedException != null)
               {

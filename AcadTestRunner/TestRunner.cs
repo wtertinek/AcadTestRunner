@@ -4,6 +4,7 @@ using System.Configuration;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -40,17 +41,22 @@ namespace AcadTestRunner
       TestRunner.addinPath = Path.Combine(addinRootDir, Path.GetFileName(typeof(TestRunner).Assembly.Location));
     }
 
-    public static TestResult RunTest<T>(string acadTestName) where T : class
-    {
-      return RunTest(typeof(T).Assembly.Location, typeof(T).Name, acadTestName);
-    }
-
     public static TestResult RunTest(Type testClassType, string acadTestName)
     {
       return RunTest(testClassType.Assembly.Location, testClassType.Name, acadTestName);
     }
 
     public static TestResult RunTest(string testAssemblyPath, string testClassName, string acadTestName)
+    {
+      if (!File.Exists(testAssemblyPath))
+      {
+        throw new FileNotFoundException("Path " + testAssemblyPath + " not found");
+      }
+
+      return RunTest(new TestMetadata(testAssemblyPath, testClassName, acadTestName), acadTestName);
+    }
+
+    private static TestResult RunTest(TestMetadata metadata, string acadTestName)
     {
       #region Parameter checks
 
@@ -70,18 +76,58 @@ namespace AcadTestRunner
           throw new FileNotFoundException("AppSetting '" + AppSettingAcadRootDir + "' not found");
         }
       }
-      
-      if (!File.Exists(testAssemblyPath))
-      {
-        throw new FileNotFoundException("Path " + testAssemblyPath + " not found");
-      }
 
       #endregion
 
-      var coreConsole = new CoreConsole(coreConsolePath, addinPath);
-      var metadata = new TestMetadata(testAssemblyPath, testClassName, acadTestName);
+      if (metadata.Type == null)
+      {
+        return TestResult.TestFailed("Class " + metadata.ClassName + " not found");
+      }
+      else if (!metadata.HasPublicConstructor)
+      {
+        return TestResult.TestFailed("No public default constructor found in class " + metadata.ClassName);
+      }
+
       var dwgFilePath = metadata.AcadTestAttribute != null ? metadata.AcadTestAttribute.DwgFilePath : null;
-      var result = coreConsole.LoadAndExecuteTest(testAssemblyPath, testClassName, acadTestName, dwgFilePath);
+      AcadTestContext context = null;
+
+      if (metadata.TestSetupMethod != null)
+      {
+        var instance = Activator.CreateInstance(metadata.Type);
+        context = new AcadTestContext(acadTestName, dwgFilePath);
+        metadata.Type.InvokeMember(metadata.TestSetupMethod.Name, BindingFlags.InvokeMethod, null, instance, new object[] { context });
+
+        if (context.CustomDwgFilePath)
+        {
+          if (!File.Exists(context.DwgFilePath))
+          {
+            return TestResult.TestFailed("File " + context.DwgFilePath + " not found");
+          }
+          else if (dwgFilePath != null)
+          {
+            return TestResult.TestFailed("DWG file path provided via AcadTestAttribute and AcadTestContext");
+          }
+        }
+
+        dwgFilePath = context.DwgFilePath;
+      }
+
+      var deleteDwgFileAfterTest = !string.IsNullOrEmpty(dwgFilePath);
+
+      if (context != null)
+      {
+        deleteDwgFileAfterTest = context.DeleteDwgFileAfterTest;
+      }
+
+      var coreConsole = new CoreConsole(coreConsolePath, addinPath);
+      var result = coreConsole.LoadAndExecuteTest(metadata.Type.Assembly.Location, metadata.Type.Name, acadTestName, dwgFilePath, deleteDwgFileAfterTest);
+
+      if (context != null &&
+          context.CustomDwgFilePath &&
+          context.DeleteDwgFileAfterTest)
+      {
+        File.Delete(context.DwgFilePath);
+      }
 
       if (result.ExitCode == 0)
       {

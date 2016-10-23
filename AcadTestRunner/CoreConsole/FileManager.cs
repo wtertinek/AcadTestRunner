@@ -11,7 +11,7 @@ namespace AcadTestRunner
   {
     private bool deleteDwgFile;
 
-    public FileManager(string dwgFilePath)
+    public FileManager(string dwgFilePath, bool deleteDwgFile)
     {
       ScriptFilePath = Path.GetTempFileName()
                            .Replace(".tmp", ".scr");
@@ -19,8 +19,9 @@ namespace AcadTestRunner
       if (string.IsNullOrEmpty(dwgFilePath))
       {
         TmpDwgFilePath = ScriptFilePath.Replace(".scr", ".dwg");
-        deleteDwgFile = true;
       }
+
+      this.deleteDwgFile = deleteDwgFile;
     }
 
     public void SaveScript(string script)

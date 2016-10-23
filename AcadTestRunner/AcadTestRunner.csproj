@@ -54,6 +54,7 @@
   <ItemGroup>
     <Compile Include="Attributes\AcadTestAttribute.cs" />
     <Compile Include="Attributes\AcadExpectedExceptionAttribute.cs" />
+    <Compile Include="Attributes\AcadTestSetupAttribute.cs" />
     <Compile Include="CoreConsole\CoreConsole.cs" />
     <Compile Include="CoreConsole\FileManager.cs" />
     <Compile Include="CoreConsole\TestExecutionResult.cs" />
