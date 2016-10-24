@@ -20,6 +20,10 @@ namespace AcadTestRunner
       {
         TmpDwgFilePath = ScriptFilePath.Replace(".scr", ".dwg");
       }
+      else if (deleteDwgFile)
+      {
+        TmpDwgFilePath = dwgFilePath;
+      }
 
       this.deleteDwgFile = deleteDwgFile;
     }

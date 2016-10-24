@@ -43,7 +43,7 @@ namespace AcadTestRunner
 
     public static TestResult RunTest(Type testClassType, string acadTestName)
     {
-      return RunTest(testClassType.Assembly.Location, testClassType.Name, acadTestName);
+      return RunTest(new TestMetadata(testClassType, testClassType.Name, acadTestName));
     }
 
     public static TestResult RunTest(string testAssemblyPath, string testClassName, string acadTestName)
@@ -53,10 +53,10 @@ namespace AcadTestRunner
         throw new FileNotFoundException("Path " + testAssemblyPath + " not found");
       }
 
-      return RunTest(new TestMetadata(testAssemblyPath, testClassName, acadTestName), acadTestName);
+      return RunTest(new TestMetadata(testAssemblyPath, testClassName, acadTestName));
     }
 
-    private static TestResult RunTest(TestMetadata metadata, string acadTestName)
+    private static TestResult RunTest(TestMetadata metadata)
     {
       #region Parameter checks
 
@@ -94,7 +94,7 @@ namespace AcadTestRunner
       if (metadata.TestSetupMethod != null)
       {
         var instance = Activator.CreateInstance(metadata.Type);
-        context = new AcadTestContext(acadTestName, dwgFilePath);
+        context = new AcadTestContext(metadata.MethodName, dwgFilePath);
         metadata.Type.InvokeMember(metadata.TestSetupMethod.Name, BindingFlags.InvokeMethod, null, instance, new object[] { context });
 
         if (context.CustomDwgFilePath)
@@ -111,8 +111,13 @@ namespace AcadTestRunner
 
         dwgFilePath = context.DwgFilePath;
       }
+      else if (dwgFilePath != null &&
+               !File.Exists(dwgFilePath))
+      {
+        return TestResult.TestFailed("File " + dwgFilePath + " not found");
+      }
 
-      var deleteDwgFileAfterTest = !string.IsNullOrEmpty(dwgFilePath);
+      var deleteDwgFileAfterTest = string.IsNullOrEmpty(dwgFilePath);
 
       if (context != null)
       {
@@ -120,7 +125,7 @@ namespace AcadTestRunner
       }
 
       var coreConsole = new CoreConsole(coreConsolePath, addinPath);
-      var result = coreConsole.LoadAndExecuteTest(metadata.Type.Assembly.Location, metadata.Type.Name, acadTestName, dwgFilePath, deleteDwgFileAfterTest);
+      var result = coreConsole.LoadAndExecuteTest(metadata.Type.Assembly.Location, metadata.Type.Name, metadata.MethodName, dwgFilePath, deleteDwgFileAfterTest);
 
       if (context != null &&
           context.CustomDwgFilePath &&
@@ -131,7 +136,7 @@ namespace AcadTestRunner
 
       if (result.ExitCode == 0)
       {
-        var idx = FindIndex(result.Output, Notification.GetPassedMessage(acadTestName));
+        var idx = FindIndex(result.Output, Notification.GetPassedMessage(metadata.MethodName));
 
         if (idx >= 0)
         {
@@ -139,7 +144,7 @@ namespace AcadTestRunner
         }
         else
         {
-          var failedMessage = Notification.GetFailedMessage(acadTestName);
+          var failedMessage = Notification.GetFailedMessage(metadata.MethodName);
           idx = FindIndex(result.Output, failedMessage);
 
           if (idx >= 0)
