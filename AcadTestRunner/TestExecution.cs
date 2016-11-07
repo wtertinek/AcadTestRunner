@@ -30,31 +30,22 @@ namespace AcadTestRunner
         if (attachDebugger)
         {
           dynamic dte = null;
+          var vsVersion = -1;
 
-          try
-          {
-            dte = System.Runtime.InteropServices.Marshal.GetActiveObject("VisualStudio.DTE.13.0");
-          }
-          catch { }
-
-          if (dte == null)
+          foreach (var version in new [] { 14, 12, 11})
           {
             try
             {
-              dte = System.Runtime.InteropServices.Marshal.GetActiveObject("VisualStudio.DTE.12.0");
+              dte = System.Runtime.InteropServices.Marshal.GetActiveObject(GetVisualStudioProgID(version));
+
+              if (dte != null)
+              {
+                vsVersion = version;
+                break;
+              }
             }
             catch { }
           }
-
-          if (dte == null)
-          {
-            try
-            {
-              dte = System.Runtime.InteropServices.Marshal.GetActiveObject("VisualStudio.DTE.11.0");
-            }
-            catch { }
-          }
-
 
           if (dte == null)
           {
@@ -67,7 +58,8 @@ namespace AcadTestRunner
               if (process.ProcessID == Process.GetCurrentProcess().Id)
               {
                 process.Attach();
-                loaderNotifier.WriteMessage("Debugger attached to AcCoreConsole.exe");
+                loaderNotifier.WriteMessage(GetVisualStudioProgID(vsVersion) + " attached to AcCoreConsole.exe");
+                break;
               }
             }
           }
@@ -156,6 +148,11 @@ namespace AcadTestRunner
         loaderNotifier.WriteMessage(e.Message);
         loaderNotifier.WriteMessage("Test execution finished with errors");
       }
+    }
+
+    private static string GetVisualStudioProgID(int versionNumber)
+    {
+      return "VisualStudio.DTE." + versionNumber + ".0";
     }
   }
 }
