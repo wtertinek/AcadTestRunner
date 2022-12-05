@@ -53,33 +53,27 @@ namespace AcadTestRunner
       }
     }
 
-    public bool Passed { get; private set; }
+    public bool Passed { get; }
 
-    public string Message { get; private set; }
+    public string Message { get; }
 
     public string FullOutput { get; private set; }
 
     public void DebugPrintFullOutput(string testName)
     {
-      var header = "---------- " + testName + " ----------";
+      var header = $"---------- {testName} ----------";
       Debug.WriteLine(header);
       Debug.WriteLine(FullOutput);
       Debug.WriteLine(new string('-', header.Length));
     }
 
     internal static TestResult TestPassed(IReadOnlyCollection<string> fullOutput)
-    {
-      return new TestResult(fullOutput);
-    }
+      => new TestResult(fullOutput);
 
     internal static TestResult TestFailed(string message)
-    {
-      return TestFailed(message, new string[0]);
-    }
+      => TestFailed(message, new string[0]);
 
     internal static TestResult TestFailed(string message, IReadOnlyCollection<string> fullOutput)
-    {
-      return new TestResult(message, fullOutput);
-    }
+      => new TestResult(message, fullOutput);
   }
 }

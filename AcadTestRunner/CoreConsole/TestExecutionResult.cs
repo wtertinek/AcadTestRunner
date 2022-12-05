@@ -8,14 +8,14 @@ namespace AcadTestRunner
 {
   internal class TestExecutionResult
   {
-    public TestExecutionResult(int exitCode, IReadOnlyCollection<string> output)
+    public TestExecutionResult(int exitCode, params string[] output)
     {
       ExitCode = exitCode;
       Output = output;
     }
 
-    public int ExitCode { get; private set; }
+    public int ExitCode { get; }
 
-    public IReadOnlyCollection<string> Output { get; private set; }
+    public IReadOnlyCollection<string> Output { get; }
   }
 }

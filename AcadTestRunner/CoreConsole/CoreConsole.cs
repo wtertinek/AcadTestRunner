@@ -9,8 +9,8 @@ namespace AcadTestRunner
 {
   internal class CoreConsole
   {
-    private string coreConsolePath;
-    private string addinPath;
+    private readonly string coreConsolePath;
+    private readonly string addinPath;
 
     public CoreConsole(string coreConsolePath, string addinPath)
     {
@@ -18,7 +18,9 @@ namespace AcadTestRunner
       this.addinPath = addinPath;
     }
 
-    public TestExecutionResult LoadAndExecuteTest(string testAssemblyPath, string testClassName, string acadTestName, string dwgFilePath, bool deleteDwgFileAfterTest)
+    public TestExecutionResult LoadAndExecuteTest(string testAssemblyPath, string testClassName,
+                                                  string acadTestName, string dwgFilePath,
+                                                  bool deleteDwgFileAfterTest)
     {
       var dwgFileProvided = !string.IsNullOrEmpty(dwgFilePath);
 
@@ -49,11 +51,11 @@ namespace AcadTestRunner
           var process = new Process();
           var output = new List<string>();
           var exitcode = process.StartAndWait(coreConsolePath, param.ToString(), o => output.Add(o.Replace("\0", "")));
-          return new TestExecutionResult(exitcode, output);
+          return new TestExecutionResult(exitcode, output.ToArray());
         }
         catch
         {
-          return new TestExecutionResult(-1, new [] { "TestRunner: error starting process" });
+          return new TestExecutionResult(1, "TestRunner: error starting process");
         }
       }
     }

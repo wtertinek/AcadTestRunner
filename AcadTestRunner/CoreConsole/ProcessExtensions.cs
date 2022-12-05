@@ -8,14 +8,10 @@ namespace System.Diagnostics
   internal static class ProcessExtensions
   {
     public static int StartAndWait(this Process process, string fileName, Action<string> writeOutput)
-    {
-      return StartAndWait(process, fileName, null, null, writeOutput);
-    }
+      => StartAndWait(process, fileName, null, null, writeOutput);
 
     public static int StartAndWait(this Process process, string fileName, string arguments, Action<string> writeOutput)
-    {
-      return StartAndWait(process, fileName, arguments, null, writeOutput);
-    }
+      => StartAndWait(process, fileName, arguments, null, writeOutput);
 
     public static int StartAndWait(this Process process, string fileName, string arguments, string workingDirectory, Action<string> writeOutput)
     {
@@ -37,8 +33,16 @@ namespace System.Diagnostics
         process.StartInfo.WorkingDirectory = workingDirectory;
       }
 
-      process.OutputDataReceived += (sender, e) => { if (e.Data != null) { writeOutput(e.Data); } };
-      process.ErrorDataReceived += (sender, e) => { if (e.Data != null) { writeOutput(e.Data); } };
+      void writeData(string data)
+      {
+        if (data != null)
+        {
+          writeOutput(data);
+        }
+      }
+
+      process.OutputDataReceived += (_, e) => writeData(e.Data);
+      process.ErrorDataReceived += (_, e) => writeData(e.Data);
 
       process.Start();
       process.BeginOutputReadLine();

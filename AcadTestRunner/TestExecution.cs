@@ -5,6 +5,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using Autodesk.AutoCAD.Runtime;
+using AcadApplication = Autodesk.AutoCAD.ApplicationServices.Application;
 using System.Diagnostics;
 
 namespace AcadTestRunner
@@ -21,7 +22,7 @@ namespace AcadTestRunner
 
       try
       {
-        var editor = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument.Editor;
+        var editor = AcadApplication.DocumentManager.MdiActiveDocument.Editor;
         var assemblyPath = editor.GetString(Notification.GetMessage("TestLoader", "Assembly path")).StringResult;
         var className = editor.GetString(Notification.GetMessage("TestLoader", "Class name")).StringResult;
         var methodName = editor.GetString(Notification.GetMessage("TestLoader", "Method name")).StringResult;
@@ -30,17 +31,18 @@ namespace AcadTestRunner
         if (attachDebugger)
         {
           dynamic dte = null;
-          var vsVersion = -1;
+          string progId = null;
 
-          foreach (var version in new [] { 14, 12, 11})
+          foreach (var version in new [] { 17, 16, 15, 14, 12, 11 })
           {
             try
             {
-              dte = System.Runtime.InteropServices.Marshal.GetActiveObject(GetVisualStudioProgID(version));
+              var id = $"VisualStudio.DTE.{version}.0";
+              dte = System.Runtime.InteropServices.Marshal.GetActiveObject(id);
 
               if (dte != null)
               {
-                vsVersion = version;
+                progId = id;
                 break;
               }
             }
@@ -58,7 +60,7 @@ namespace AcadTestRunner
               if (process.ProcessID == Process.GetCurrentProcess().Id)
               {
                 process.Attach();
-                loaderNotifier.WriteMessage(GetVisualStudioProgID(vsVersion) + " attached to AcCoreConsole.exe");
+                loaderNotifier.WriteMessage($"{progId} attached to AcCoreConsole.exe");
                 break;
               }
             }
@@ -71,25 +73,25 @@ namespace AcadTestRunner
 
         if (metadata.Type == null)
         {
-          testNotifier.TestFailed("Class " + className + " not found");
+          testNotifier.TestFailed($"Class {className} not found");
           loaderNotifier.WriteMessage("Test execution finished with errors");
         }
         else
         {
-          loaderNotifier.WriteMessage("Class " + metadata.Type.Name + " loaded");
+          loaderNotifier.WriteMessage($"Class {metadata.Type.Name} loaded");
 
           if (metadata.TestMethod == null)
           {
-            testNotifier.TestFailed("No public instance method " + methodName + " found");
+            testNotifier.TestFailed($"No public instance method {methodName} found");
             loaderNotifier.WriteMessage("Test execution finished with errors");
           }
           else
           {
-            loaderNotifier.WriteMessage("Method " + methodName + " found");
+            loaderNotifier.WriteMessage($"Method {methodName} found");
 
             if (!metadata.HasPublicConstructor)
             {
-              testNotifier.TestFailed("No public default constructor found in class " + className);
+              testNotifier.TestFailed($"No public default constructor found in class {className}");
               loaderNotifier.WriteMessage("Test execution finished with errors");
             }
             else
@@ -97,18 +99,18 @@ namespace AcadTestRunner
               if (metadata.ExpectedException != null)
               {
                 expectedException = metadata.ExpectedException;
-                loaderNotifier.WriteMessage("ExcpectedException " + expectedException.Name + " found");
+                loaderNotifier.WriteMessage($"ExcpectedException {expectedException.Name} found");
               }
 
               var instance = Activator.CreateInstance(metadata.Type);
-              loaderNotifier.WriteMessage("Instance of " + metadata.Type.Name + " created");
+              loaderNotifier.WriteMessage($"Instance of {metadata.Type.Name} created");
 
-              loaderNotifier.WriteMessage("Executing AcadTest " + methodName);
+              loaderNotifier.WriteMessage($"Executing AcadTest {methodName}");
               metadata.Type.InvokeMember(metadata.TestMethod.Name, BindingFlags.InvokeMethod, null, instance, new object[0]);
 
               if (expectedException != null)
               {
-                testNotifier.TestFailed("Expected exception of type " + expectedException.FullName + " not thrown");
+                testNotifier.TestFailed($"Expected exception of type {expectedException.FullName} not thrown");
                 loaderNotifier.WriteMessage("Test execution finished with errors");
               }
               else
@@ -148,11 +150,6 @@ namespace AcadTestRunner
         loaderNotifier.WriteMessage(e.Message);
         loaderNotifier.WriteMessage("Test execution finished with errors");
       }
-    }
-
-    private static string GetVisualStudioProgID(int versionNumber)
-    {
-      return "VisualStudio.DTE." + versionNumber + ".0";
     }
   }
 }

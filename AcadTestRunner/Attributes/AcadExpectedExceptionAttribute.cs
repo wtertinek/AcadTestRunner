@@ -13,13 +13,20 @@ namespace AcadTestRunner
   {
     public AcadExpectedExceptionAttribute(Type expectedException)
     {
-      if (expectedException == null) throw new ArgumentNullException();
+      if (expectedException == null)
+      {
+        throw new ArgumentNullException();
+      }
+
       if (expectedException.BaseType.Name != "Exception" &&
-          expectedException.Name != "Exception") throw new ArgumentException();
+          expectedException.Name != "Exception")
+      {
+        throw new ArgumentException();
+      }
 
       ExpectedException = expectedException;
     }
 
-    internal Type ExpectedException { get; private set; }
+    internal Type ExpectedException { get; }
   }
 }

@@ -7,50 +7,46 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.Win32;
 
 namespace AcadTestRunner
 {
   [DebuggerStepThrough]
   public static class TestRunner
   {
-    private const string AppSettingAcadRootDir = "AcadRootDir";
     private const string AppSettingAddinRootDir = "AddinRootDir";
     private static string coreConsolePath;
     private static string addinPath;
 
-    public static void Init(string acadRootDir, string addinRootDir)
+    static TestRunner()
     {
-      if (!Directory.Exists(acadRootDir))
+      var acadRootDir = "";
+      //Registry.LocalMachine.OpenSubKey(
+      coreConsolePath = Path.Combine(acadRootDir, "AcCoreConsole.exe");
+    }
+
+    public static void Init(string addinRootDir)
+    {
+      if (!Directory.Exists(addinRootDir))
       {
-        throw new FileNotFoundException("Directory " + acadRootDir + " not found");
-      }
-      else if (!File.Exists(Path.Combine(acadRootDir, "AcCoreConsole.exe")))
-      {
-        throw new FileNotFoundException("File " + Path.Combine(acadRootDir, "AcCoreConsole.exe") + " not found");
-      }
-      else if (!Directory.Exists(addinRootDir))
-      {
-        throw new FileNotFoundException("Directory " + addinRootDir + " not found");
+        throw new FileNotFoundException($"Directory {addinRootDir} not found");
       }
       else if (!File.Exists(Path.Combine(addinRootDir, Path.GetFileName(typeof(TestRunner).Assembly.Location))))
       {
-        throw new FileNotFoundException("File " + Path.Combine(addinRootDir, Path.GetFileName(typeof(TestRunner).Assembly.Location)) + " not found");
+        throw new FileNotFoundException($"File {Path.Combine(addinRootDir, Path.GetFileName(typeof(TestRunner).Assembly.Location))} not found");
       }
 
-      TestRunner.coreConsolePath = Path.Combine(acadRootDir, "AcCoreConsole.exe");
-      TestRunner.addinPath = Path.Combine(addinRootDir, Path.GetFileName(typeof(TestRunner).Assembly.Location));
+      addinPath = Path.Combine(addinRootDir, Path.GetFileName(typeof(TestRunner).Assembly.Location));
     }
 
     public static TestResult RunTest(Type testClassType, string acadTestName)
-    {
-      return RunTest(new TestMetadata(testClassType, testClassType.Name, acadTestName));
-    }
+      => RunTest(new TestMetadata(testClassType, testClassType.Name, acadTestName));
 
     public static TestResult RunTest(string testAssemblyPath, string testClassName, string acadTestName)
     {
       if (!File.Exists(testAssemblyPath))
       {
-        throw new FileNotFoundException("Path " + testAssemblyPath + " not found");
+        throw new FileNotFoundException($"Path {testAssemblyPath} not found");
       }
 
       return RunTest(new TestMetadata(testAssemblyPath, testClassName, acadTestName));
@@ -73,7 +69,7 @@ namespace AcadTestRunner
         }
         else
         {
-          throw new FileNotFoundException("AppSetting '" + AppSettingAcadRootDir + "' not found");
+          throw new FileNotFoundException($"AppSetting '{AppSettingAcadRootDir}' not found");
         }
       }
 
@@ -81,14 +77,14 @@ namespace AcadTestRunner
 
       if (metadata.Type == null)
       {
-        return TestResult.TestFailed("Class " + metadata.ClassName + " not found");
+        return TestResult.TestFailed($"Class {metadata.ClassName} not found");
       }
       else if (!metadata.HasPublicConstructor)
       {
-        return TestResult.TestFailed("No public default constructor found in class " + metadata.ClassName);
+        return TestResult.TestFailed($"No public default constructor found in class {metadata.ClassName}");
       }
 
-      var dwgFilePath = metadata.AcadTestAttribute != null ? metadata.AcadTestAttribute.DwgFilePath : null;
+      var dwgFilePath = metadata.AcadTestAttribute?.DwgFilePath;
       AcadTestContext context = null;
 
       if (metadata.TestSetupMethod != null)
@@ -97,11 +93,11 @@ namespace AcadTestRunner
         context = new AcadTestContext(metadata.MethodName, dwgFilePath);
         metadata.Type.InvokeMember(metadata.TestSetupMethod.Name, BindingFlags.InvokeMethod, null, instance, new object[] { context });
 
-        if (context.CustomDwgFilePath)
+        if (context.UsesCustomDwg)
         {
           if (!File.Exists(context.DwgFilePath))
           {
-            return TestResult.TestFailed("File " + context.DwgFilePath + " not found");
+            return TestResult.TestFailed($"File {context.DwgFilePath} not found");
           }
           else if (dwgFilePath != null)
           {
@@ -114,7 +110,7 @@ namespace AcadTestRunner
       else if (dwgFilePath != null &&
                !File.Exists(dwgFilePath))
       {
-        return TestResult.TestFailed("File " + dwgFilePath + " not found");
+        return TestResult.TestFailed($"File {dwgFilePath} not found");
       }
 
       var deleteDwgFileAfterTest = string.IsNullOrEmpty(dwgFilePath);
@@ -128,7 +124,7 @@ namespace AcadTestRunner
       var result = coreConsole.LoadAndExecuteTest(metadata.Type.Assembly.Location, metadata.Type.Name, metadata.MethodName, dwgFilePath, deleteDwgFileAfterTest);
 
       if (context != null &&
-          context.CustomDwgFilePath &&
+          context.UsesCustomDwg &&
           context.DeleteDwgFileAfterTest)
       {
         File.Delete(context.DwgFilePath);
@@ -169,10 +165,8 @@ namespace AcadTestRunner
     }
 
     private static int FindIndex(IReadOnlyCollection<string> output, string searchString)
-    {
-      return output.ToList()
-                   .FindIndex(l => l.TrimStart()
-                                    .StartsWith(searchString));
-    }
+      => output.ToList()
+               .FindIndex(l => l.TrimStart()
+                                .StartsWith(searchString));
   }
 }

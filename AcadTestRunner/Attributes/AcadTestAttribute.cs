@@ -17,10 +17,8 @@ namespace AcadTestRunner
     }
 
     public AcadTestAttribute(string dwgFilePath)
-    {
-      DwgFilePath = dwgFilePath;
-    }
+      => DwgFilePath = dwgFilePath;
 
-    internal string DwgFilePath { get; private set; }
+    internal string DwgFilePath { get; }
   }
 }

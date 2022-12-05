@@ -28,11 +28,12 @@ namespace AcadTestRunner
         Type = type;
 
         var testMethodInfo = Type.GetMethods(BindingFlags.Public | BindingFlags.Instance)
-                                 .Select(m => new { Method = m, AcadTestAttribute = m.GetCustomAttributes(typeof(AcadTestAttribute), false).FirstOrDefault() })
+                                 .Select(m => (Method: m,
+                                               AcadTestAttribute: m.GetCustomAttributes(typeof(AcadTestAttribute), false).FirstOrDefault()))
                                  .FirstOrDefault(m => m.Method.Name == methodName &&
                                                       m.AcadTestAttribute != null);
 
-        if (testMethodInfo != null)
+        if (testMethodInfo != default)
         {
           TestMethod = testMethodInfo.Method;
           AcadTestAttribute = testMethodInfo.AcadTestAttribute as AcadTestAttribute;
@@ -45,10 +46,11 @@ namespace AcadTestRunner
           }
 
           var testSetupMethodInfo = Type.GetMethods(BindingFlags.Public | BindingFlags.Instance)
-                                        .Select(m => new { Method = m, AcadTestSetupAttribute = m.GetCustomAttributes(typeof(AcadTestSetupAttribute), false).FirstOrDefault() })
+                                        .Select(m => (Method: m,
+                                                      AcadTestSetupAttribute: m.GetCustomAttributes(typeof(AcadTestSetupAttribute), false).FirstOrDefault()))
                                         .FirstOrDefault(m => m.AcadTestSetupAttribute != null);
 
-          if (testSetupMethodInfo != null)
+          if (testSetupMethodInfo != default)
           {
             TestSetupMethod = testSetupMethodInfo.Method;
           }
@@ -56,28 +58,24 @@ namespace AcadTestRunner
       }
     }
 
-    public string ClassName { get; private set; }
+    public string ClassName { get; }
 
-    public string MethodName { get; private set; }
+    public string MethodName { get; }
 
-    public Type Type { get; private set; }
+    public Type Type { get; }
 
     public bool HasPublicConstructor
-    {
-      get
-      {
-        return Type.GetConstructors()
-                   .Any(c => c.IsPublic &&
-                             c.GetParameters().Count() == 0);
-      }
-    }
+      => Type.GetConstructors()
+             .Any(c => c.IsPublic &&
+                       !c.GetParameters()
+                         .Any());
 
-    public MethodInfo TestMethod { get; private set; }
+    public MethodInfo TestMethod { get; }
 
-    public MethodInfo TestSetupMethod { get; private set; }
+    public MethodInfo TestSetupMethod { get; }
 
-    public AcadTestAttribute AcadTestAttribute { get; private set; }
+    public AcadTestAttribute AcadTestAttribute { get; }
 
-    public Type ExpectedException { get; private set; }
+    public Type ExpectedException { get; }
   }
 }

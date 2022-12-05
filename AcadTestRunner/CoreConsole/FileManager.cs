@@ -9,7 +9,7 @@ namespace AcadTestRunner
 {
   internal class FileManager : IDisposable
   {
-    private bool deleteDwgFile;
+    private readonly bool deleteDwgFile;
 
     public FileManager(string dwgFilePath, bool deleteDwgFile)
     {
@@ -29,13 +29,11 @@ namespace AcadTestRunner
     }
 
     public void SaveScript(string script)
-    {
-      File.WriteAllText(ScriptFilePath, script, Encoding.Default);
-    }
+      => File.WriteAllText(ScriptFilePath, script, Encoding.Default);
 
-    public string ScriptFilePath { get; private set; }
+    public string ScriptFilePath { get; }
 
-    public string TmpDwgFilePath { get; private set; }
+    public string TmpDwgFilePath { get; }
 
     public void Dispose()
     {
